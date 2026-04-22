@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyLedger - Flight Booking with Blockchain</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --color-primary: #3b82f6;
+            --color-secondary: #8b5cf6;
+            --color-success: #10b981;
+            --color-danger: #ef4444;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+            color: var(--text-primary);
+            background-attachment: fixed;
+            min-height: 100vh;
+            transition: background-color 0.3s;
+        }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .theme-toggle {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 1rem;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .flights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .flight-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .flight-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .flight-route {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .flight-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-success);
+            margin-bottom: 1rem;
+        }
+
+        .flight-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--glass-border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 500px;
+            width: 90%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 2rem;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem 2rem;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 0.3s;
+            z-index: 3000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--color-success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--color-danger);
+        }
+
+        .message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--color-danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .role-badge[data-role="admin"] {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--color-secondary);
+        }
+
+        .role-badge[data-role="passenger"] {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--color-primary);
+        }
+
+        .login-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            align-items: center;
+            min-height: calc(100vh - 80px);
+        }
+
+        .login-card {
+            max-width: 500px;
+        }
+
+        .login-card h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .demo-info {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .demo-info h3 {
+            margin-bottom: 1rem;
+            color: var(--color-primary);
+        }
+
+        .demo-user p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0.5rem 0;
+            font-family: monospace;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .booking-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .flights-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .booking-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.75rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand" onclick="app.showPage('dashboard')">
+            <span>✈️ SkyLedger</span>
+        </div>
+        <div class="nav-menu">
+            <button class="nav-link" id="navDashboard" style="display:none" onclick="app.showPage('dashboard')">Dashboard</button>
+            <button class="nav-link" id="navBooking" style="display:none" onclick="app.showPage('booking')">Booking</button>
+            <button class="nav-link" id="navAdmin" style="display:none" onclick="app.showPage('admin')">Admin</button>
+            <button class="theme-toggle" onclick="theme.toggle()">🌙</button>
+            <button class="nav-link" id="logoutBtn" style="display:none" onclick="auth.logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Container -->
+    <div class="container">
+        
+        <!-- Login Page -->
+        <div id="loginPage" class="page active">
+            <div class="login-container">
+                <div class="glass-card login-card">
+                    <h1>Welcome to SkyLedger</h1>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Book flights with blockchain security</p>
+
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById('loginContent').classList.add('active')">Login</button>
+                        <button class="tab-btn" onclick="document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); document.getElementById('registerContent').classList.add('active')">Register</button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="loginContent" class="tab-content active" onsubmit="auth.handleLogin(event)">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="loginUsername" placeholder="Enter username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="loginPassword" placeholder="Enter password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <span id="loginText">Login</span>
+                            <span id="loginSpinner" style="display:none" class="spinner"></span>
+                        </button>
+                    </form>
+
+                    <!-- Register Form -->
+                    <form id="registerContent" class="tab-content" onsubmit="auth.handleRegister(event)">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="regUsername" placeholder="Choose username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="regPassword" placeholder="Min 6 characters" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select id="regRole" required>
+                                <option value="passenger">Passenger</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <span id="regText">Create Account</span>
+                            <span id="regSpinner" style="display:none" class="spinner"></span>
+                        </button>
+                    </form>
+
+                    <div id="formMessage" class="message"></div>
+                </div>
+
+                <div class="demo-info">
+                    <h3>Demo Credentials</h3>
+                    <div class="demo-user">
+                        <p><strong>Passenger:</strong><br>alice / password123</p>
+                        <p style="margin-top: 1rem;"><strong>Admin:</strong><br>admin / adminpass</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboardPage" class="page">
+            <h2 style="margin-bottom: 2rem;">Dashboard</h2>
+            
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="statBookings">0</div>
+                    <div class="stat-label">Total Bookings</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="statSpent">$0</div>
+                    <div class="stat-label">Amount Spent</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="statFlights">0</div>
+                    <div class="stat-label">Unique Flights</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="statAvg">$0</div>
+                    <div class="stat-label">Avg Price</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem;">User Profile</h3>
+                    <p><strong>Username:</strong> <span id="userUsername">-</span></p>
+                    <p><strong>Role:</strong> <span id="userRole" class="role-badge">-</span></p>
+                    <p><strong>Member Since:</strong> <span id="userJoined">-</span></p>
+                </div>
+
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem;">Blockchain Status</h3>
+                    <p><strong>Total Blocks:</strong> <span id="blockchainBlocks">1</span></p>
+                    <p><strong>Difficulty:</strong> <span id="blockchainDifficulty">4</span></p>
+                    <p><strong>Status:</strong> <span id="blockchainStatus" style="color: var(--color-success);">✓ Valid</span></p>
+                </div>
+            </div>
+
+            <h3 style="margin: 2rem 0 1rem;">Recent Bookings</h3>
+            <div id="recentBookings">
+                <p style="color: var(--text-secondary); text-align: center;">No bookings yet</p>
+            </div>
+        </div>
+
+        <!-- Booking Page -->
+        <div id="bookingPage" class="page">
+            <h2 style="margin-bottom: 2rem;">Book a Flight</h2>
+
+            <div class="glass-card" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Search Flights</h3>
+                <div class="search-grid">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>From</label>
+                        <input type="text" id="searchDeparture" placeholder="City code" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>To</label>
+                        <input type="text" id="searchArrival" placeholder="City code" style="text-transform: uppercase;">
+                    </div>
+                    <button class="btn btn-primary" onclick="booking.search()">Search</button>
+                    <button class="btn btn-secondary" onclick="booking.loadFlights()">Show All</button>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 1.5rem;">Available Flights</h3>
+            <div id="flightsList" class="flights-grid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Admin Page -->
+        <div id="adminPage" class="page">
+            <h2 style="margin-bottom: 2rem;">Admin Dashboard</h2>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="admin.switchTab('bookings')">Bookings</button>
+                <button class="tab-btn" onclick="admin.switchTab('users')">Users</button>
+                <button class="tab-btn" onclick="admin.switchTab('analytics')">Analytics</button>
+                <button class="tab-btn" onclick="admin.switchTab('blockchain')">Blockchain</button>
+            </div>
+
+            <!-- Bookings Tab -->
+            <div id="bookingsTab" class="tab-content active">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem;">All Bookings</h3>
+                    <div class="table-responsive">
+                        <table id="bookingsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>User</th>
+                                    <th>Flight</th>
+                                    <th>Seat</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingsBody">
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No bookings</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="usersTab" class="tab-content">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem;">Users</h3>
+                    <div class="table-responsive">
+                        <table id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersBody">
+                                <tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No users</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="tab-content">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem;">Statistics</h3>
+                        <p><strong>Total Bookings:</strong> <span id="adminBookings">0</span></p>
+                        <p><strong>Total Revenue:</strong> <span id="adminRevenue">$0</span></p>
+                        <p><strong>Avg Price:</strong> <span id="adminAvgPrice">$0</span></p>
+                        <p><strong>Unique Users:</strong> <span id="adminUsers">0</span></p>
+                        <p><strong>Unique Flights:</strong> <span id="adminFlights">0</span></p>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem;">Bookings per Day</h3>
+                        <div class="chart-container"><canvas id="bookingsChart"></canvas></div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem;">Revenue by Flight</h3>
+                        <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h3 style="margin-bottom: 1.5rem;">Seat Occupancy</h3>
+                        <div class="chart-container"><canvas id="occupancyChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blockchain Tab -->
+            <div id="blockchainTab" class="tab-content">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1.5rem;">Blockchain Verification</h3>
+                    <button class="btn btn-primary" onclick="admin.validate()" style="margin-right: 1rem;">Validate Chain</button>
+                    <button class="btn btn-secondary" onclick="admin.viewChain()">View Blocks</button>
+                </div>
+
+                <div id="validationResult" class="glass-card" style="display: none; margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Validation Result</h4>
+                    <div id="validationContent"></div>
+                </div>
+
+                <div id="blockchainView" class="glass-card" style="display: none; margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem;">Blockchain Data</h4>
+                    <div id="blockchainContent" style="max-height: 600px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 1.5rem;">Book Flight</h2>
+            <div id="flightDetails"></div>
+            <div class="form-group">
+                <label>Select Seat</label>
+                <select id="seatSelect" required>
+                    <option value="">Choose a seat...</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-secondary" onclick="document.getElementById('modal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="booking.confirm()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════
+        // CONFIGURATION & API CLIENT
+        // ═══════════════════════════════════════════════════════════════════
+
+        const API_URL = 'http://localhost:5000/api';
+        const TOKEN_KEY = 'skyledger_token';
+        const USER_KEY = 'skyledger_user';
+        const THEME_KEY = 'skyledger_theme';
+
+        class API {
+            async request(method, endpoint, data = null) {
+                const options = { method };
+                const token = localStorage.getItem(TOKEN_KEY);
+
+                if (token) {
+                    options.headers = { 'Authorization': `Bearer ${token}` };
+                }
+
+                if (data) {
+                    options.headers = options.headers || {};
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'API Error');
+                }
+
+                return result;
+            }
+
+            register(username, password, role) { return this.request('POST', '/auth/register', { username, password, role }); }
+            login(username, password) { return this.request('POST', '/auth/login', { username, password }); }
+            logout() { return this.request('POST', '/auth/logout', {}); }
+            getMe() { return this.request('GET', '/auth/me'); }
+            getFlights() { return this.request('GET', '/flights'); }
+            searchFlights(dep, arr) { return this.request('POST', '/flights/search', { departure: dep, arrival: arr }); }
+            createBooking(flight, seat, price) { return this.request('POST', '/bookings', { flight, seat, price }); }
+            getMyBookings() { return this.request('GET', '/bookings'); }
+            getMyStats() { return this.request('GET', '/bookings/stats'); }
+            verifyTicket(hash) { return this.request('POST', '/bookings/verify-ticket', { ticket_hash: hash }); }
+            getAdminBookings() { return this.request('GET', '/admin/bookings'); }
+            getAdminStats() { return this.request('GET', '/admin/bookings/stats'); }
+            getAdminUsers() { return this.request('GET', '/admin/users'); }
+            getBlockchain() { return this.request('GET', '/admin/blockchain'); }
+            validateBlockchain() { return this.request('GET', '/admin/validate'); }
+        }
+
+        const api = new API();
+
+        // ═══════════════════════════════════════════════════════════════════
+        // AUTHENTICATION
+        // ═══════════════════════════════════════════════════════════════════
+
+        const auth = {
+            async handleLogin(e) {
+                e.preventDefault();
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+
+                try {
+                    document.getElementById('loginText').style.display = 'none';
+                    document.getElementById('loginSpinner').style.display = 'inline-block';
+
+                    const response = await api.login(username, password);
+                    localStorage.setItem(TOKEN_KEY, response.token);
+                    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+
+                    ui.showToast('Login successful!', 'success');
+                    setTimeout(() => {
+                        app.showPage('dashboard');
+                        dashboard.load();
+                    }, 500);
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                } finally {
+                    document.getElementById('loginText').style.display = 'inline';
+                    document.getElementById('loginSpinner').style.display = 'none';
+                }
+            },
+
+            async handleRegister(e) {
+                e.preventDefault();
+                const username = document.getElementById('regUsername').value;
+                const password = document.getElementById('regPassword').value;
+                const role = document.getElementById('regRole').value;
+
+                try {
+                    document.getElementById('regText').style.display = 'none';
+                    document.getElementById('regSpinner').style.display = 'inline-block';
+
+                    const response = await api.register(username, password, role);
+                    localStorage.setItem(TOKEN_KEY, response.token);
+                    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+
+                    ui.showToast('Account created!', 'success');
+                    setTimeout(() => {
+                        app.showPage('dashboard');
+                        dashboard.load();
+                    }, 500);
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                } finally {
+                    document.getElementById('regText').style.display = 'inline';
+                    document.getElementById('regSpinner').style.display = 'none';
+                }
+            },
+
+            logout() {
+                localStorage.clear();
+                app.showPage('login');
+                ui.showToast('Logged out', 'success');
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // DASHBOARD
+        // ═══════════════════════════════════════════════════════════════════
+
+        const dashboard = {
+            async load() {
+                try {
+                    const user = JSON.parse(localStorage.getItem(USER_KEY));
+                    document.getElementById('userUsername').textContent = user.username;
+                    document.getElementById('userRole').textContent = user.role;
+                    document.getElementById('userRole').setAttribute('data-role', user.role);
+                    document.getElementById('userJoined').textContent = new Date(user.created_at).toLocaleDateString();
+
+                    const stats = await api.getMyStats();
+                    const s = stats.stats;
+                    document.getElementById('statBookings').textContent = s.total_bookings;
+                    document.getElementById('statSpent').textContent = `$${s.total_spent.toFixed(2)}`;
+                    document.getElementById('statFlights').textContent = s.unique_flights;
+                    document.getElementById('statAvg').textContent = `$${s.average_price.toFixed(2)}`;
+
+                    const bookings = await api.getMyBookings();
+                    const container = document.getElementById('recentBookings');
+                    container.innerHTML = '';
+
+                    if (bookings.bookings.length === 0) {
+                        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No bookings yet</p>';
+                        return;
+                    }
+
+                    bookings.bookings.slice(-5).reverse().forEach(b => {
+                        const html = `
+                            <div class="booking-item">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--color-primary);">${b.flight} - Seat ${b.seat}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary);">${new Date(b.timestamp).toLocaleDateString()}</div>
+                                </div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--color-success);">$${b.price.toFixed(2)}</div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', html);
+                    });
+                } catch (error) {
+                    console.error('Dashboard load error:', error);
+                }
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // BOOKING
+        // ═══════════════════════════════════════════════════════════════════
+
+        const booking = {
+            currentFlight: null,
+            flights: [],
+
+            async loadFlights() {
+                try {
+                    const response = await api.getFlights();
+                    this.flights = response.flights;
+                    this.displayFlights(response.flights);
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            },
+
+            async search() {
+                const dep = document.getElementById('searchDeparture').value.toUpperCase();
+                const arr = document.getElementById('searchArrival').value.toUpperCase();
+
+                if (!dep && !arr) {
+                    this.loadFlights();
+                    return;
+                }
+
+                try {
+                    const response = await api.searchFlights(dep, arr);
+                    this.displayFlights(response.flights);
+                    if (response.flights.length === 0) {
+                        ui.showToast('No flights found', 'error');
+                    }
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            },
+
+            displayFlights(flights) {
+                const container = document.getElementById('flightsList');
+                container.innerHTML = '';
+
+                if (flights.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">No flights</p>';
+                    return;
+                }
+
+                flights.forEach(f => {
+                    const html = `
+                        <div class="flight-card" onclick="booking.openModal(${JSON.stringify(f).replace(/"/g, '&quot;')})">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                                <div class="flight-route">${f.departure} → ${f.arrival}</div>
+                                <div class="flight-price">$${f.price.toFixed(2)}</div>
+                            </div>
+                            <div class="flight-details">
+                                <div><strong>Flight:</strong> ${f.id}</div>
+                                <div><strong>Airline:</strong> ${f.airline}</div>
+                                <div><strong>Time:</strong> ${new Date(f.departure_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                <div><strong>Duration:</strong> ${f.duration}m</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                                <strong style="color: var(--color-success);">${f.available_seats}</strong> seats available
+                            </div>
+                            <button class="btn btn-primary btn-block">Book Now</button>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+            },
+
+            openModal(flight) {
+                this.currentFlight = flight;
+                const html = `
+                    <p><strong>Flight:</strong> ${flight.id}</p>
+                    <p><strong>Route:</strong> ${flight.departure} → ${flight.arrival}</p>
+                    <p><strong>Price:</strong> $${flight.price.toFixed(2)}</p>
+                `;
+                document.getElementById('flightDetails').innerHTML = html;
+
+                const select = document.getElementById('seatSelect');
+                select.innerHTML = '<option value="">Choose a seat...</option>';
+                for (let row = 1; row <= 10; row++) {
+                    ['A', 'B', 'C', 'D', 'E', 'F'].forEach(seat => {
+                        const opt = document.createElement('option');
+                        opt.value = `${row}${seat}`;
+                        opt.textContent = `${row}${seat}`;
+                        select.appendChild(opt);
+                    });
+                }
+
+                document.getElementById('modal').classList.add('active');
+            },
+
+            async confirm() {
+                const seat = document.getElementById('seatSelect').value;
+                if (!seat) {
+                    ui.showToast('Select a seat', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await api.createBooking(this.currentFlight.id, seat, this.currentFlight.price);
+                    ui.showToast(`Booked! Ticket: ${response.booking.ticket_hash.substring(0, 16)}...`, 'success');
+                    document.getElementById('modal').classList.remove('active');
+                    dashboard.load();
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // ADMIN
+        // ═══════════════════════════════════════════════════════════════════
+
+        const admin = {
+            charts: {},
+
+            switchTab(tab) {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(tab + 'Tab').classList.add('active');
+
+                if (tab === 'bookings') this.loadBookings();
+                else if (tab === 'users') this.loadUsers();
+                else if (tab === 'analytics') this.loadAnalytics();
+            },
+
+            async loadBookings() {
+                try {
+                    const response = await api.getAdminBookings();
+                    const tbody = document.getElementById('bookingsBody');
+                    tbody.innerHTML = '';
+
+                    response.bookings.forEach(b => {
+                        const row = `
+                            <tr>
+                                <td>${b.id}</td>
+                                <td>${b.user?.username || 'Unknown'}</td>
+                                <td>${b.flight}</td>
+                                <td>${b.seat}</td>
+                                <td>$${b.price.toFixed(2)}</td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            },
+
+            async loadUsers() {
+                try {
+                    const response = await api.getAdminUsers();
+                    const tbody = document.getElementById('usersBody');
+                    tbody.innerHTML = '';
+
+                    response.users.forEach(u => {
+                        const row = `
+                            <tr>
+                                <td>${u.id}</td>
+                                <td>${u.username}</td>
+                                <td><span class="role-badge" data-role="${u.role}">${u.role}</span></td>
+                                <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        `;
+                        tbody.insertAdjacentHTML('beforeend', row);
+                    });
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            },
+
+            async loadAnalytics() {
+                try {
+                    const response = await api.getAdminStats();
+                    const s = response.stats;
+
+                    document.getElementById('adminBookings').textContent = s.total_bookings;
+                    document.getElementById('adminRevenue').textContent = `$${s.total_revenue.toFixed(2)}`;
+                    document.getElementById('adminAvgPrice').textContent = `$${s.average_ticket_price.toFixed(2)}`;
+                    document.getElementById('adminUsers').textContent = s.unique_users;
+                    document.getElementById('adminFlights').textContent = s.unique_flights;
+
+                    this.initCharts();
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            },
+
+            initCharts() {
+                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const bookData = [12, 19, 8, 15, 22, 18, 25];
+
+                if (this.charts.bookings) this.charts.bookings.destroy();
+                this.charts.bookings = new Chart(document.getElementById('bookingsChart'), {
+                    type: 'line',
+                    data: {
+                        labels: days,
+                        datasets: [{
+                            label: 'Bookings',
+                            data: bookData,
+                            borderColor: 'var(--color-primary)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'var(--glass-border)' }, ticks: { color: 'var(--text-secondary)' } },
+                            x: { ticks: { color: 'var(--text-secondary)' } }
+                        }
+                    }
+                });
+
+                const flights = ['SG101', 'SG202', 'SG303'];
+                const revenue = [2500, 2200, 1800];
+
+                if (this.charts.revenue) this.charts.revenue.destroy();
+                this.charts.revenue = new Chart(document.getElementById('revenueChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: flights,
+                        datasets: [{
+                            label: 'Revenue',
+                            data: revenue,
+                            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(139, 92, 246, 0.8)', 'rgba(16, 185, 129, 0.8)']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'var(--glass-border)' }, ticks: { color: 'var(--text-secondary)' } },
+                            x: { ticks: { color: 'var(--text-secondary)' } }
+                        }
+                    }
+                });
+
+                if (this.charts.occupancy) this.charts.occupancy.destroy();
+                this.charts.occupancy = new Chart(document.getElementById('occupancyChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Occupied', 'Available'],
+                        datasets: [{
+                            data: [65, 35],
+                            backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(229, 231, 235, 0.8)']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: 'var(--text-primary)' } } }
+                    }
+                });
+            },
+
+            async validate() {
+                try {
+                    const response = await api.validateBlockchain();
+                    const html = `
+                        <p><strong>Status:</strong> <span style="color: ${response.status === 'valid' ? 'var(--color-success)' : 'var(--color-danger)'};">${response.status.toUpperCase()}</span></p>
+                        <p><strong>Blocks:</strong> ${response.validation.total_blocks}</p>
+                        <p><strong>Valid:</strong> ${response.validation.is_valid ? '✓ Yes' : '✗ No'}</p>
+                    `;
+                    document.getElementById('validationContent').innerHTML = html;
+                    document.getElementById('validationResult').style.display = 'block';
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            },
+
+            async viewChain() {
+                try {
+                    const response = await api.getBlockchain();
+                    const blocks = response.blockchain.chain;
+                    const html = blocks.map(b => `
+                        <div style="background: var(--bg-secondary); border-left: 4px solid var(--color-primary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                            <h5 style="margin-bottom: 0.5rem;">Block #${b.index}</h5>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); font-family: monospace;">Hash: ${b.hash}</p>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); font-family: monospace;">Nonce: ${b.nonce}</p>
+                        </div>
+                    `).join('');
+                    document.getElementById('blockchainContent').innerHTML = html;
+                    document.getElementById('blockchainView').style.display = 'block';
+                } catch (error) {
+                    ui.showToast(error.message, 'error');
+                }
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // THEME
+        // ═══════════════════════════════════════════════════════════════════
+
+        const theme = {
+            init() {
+                const saved = localStorage.getItem(THEME_KEY);
+                const dark = saved === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+                document.querySelector('.theme-toggle').textContent = dark ? '☀️' : '🌙';
+            },
+
+            toggle() {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem(THEME_KEY, next);
+                document.querySelector('.theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // UI UTILITIES
+        // ═══════════════════════════════════════════════════════════════════
+
+        const ui = {
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast show ${type}`;
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // APP
+        // ═══════════════════════════════════════════════════════════════════
+
+        const app = {
+            init() {
+                theme.init();
+                this.checkAuth();
+            },
+
+            checkAuth() {
+                const token = localStorage.getItem(TOKEN_KEY);
+                if (token) {
+                    this.setupAuth();
+                    this.showPage('dashboard');
+                    dashboard.load();
+                } else {
+                    this.setupUnauth();
+                    this.showPage('login');
+                }
+            },
+
+            setupAuth() {
+                const user = JSON.parse(localStorage.getItem(USER_KEY));
+                document.getElementById('navDashboard').style.display = 'block';
+                document.getElementById('navBooking').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+                if (user.role === 'admin') {
+                    document.getElementById('navAdmin').style.display = 'block';
+                }
+            },
+
+            setupUnauth() {
+                document.getElementById('navDashboard').style.display = 'none';
+                document.getElementById('navBooking').style.display = 'none';
+                document.getElementById('navAdmin').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'none';
+            },
+
+            showPage(page) {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(page + 'Page').classList.add('active');
+
+                if (page === 'booking') booking.loadFlights();
+                else if (page === 'admin') admin.loadBookings();
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // INITIALIZE
+        // ═══════════════════════════════════════════════════════════════════
+
+        app.init();
+    </script>
+</body>
+</html>
